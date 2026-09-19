@@ -146,12 +146,12 @@ if run_agent:
                 
                 # Mostrar traza técnica del bucle
                st.markdown("### 🔍 Traza del Bucle Autónomo (Agentic Loop)")
-                for log in log_logs:
+               for log in log_logs:
                     st.markdown(f'<div class="agent-log">{log}</div>', unsafe_allow_html=True)
                     
-                st.markdown("---")
-                st.markdown("### 📋 Dictamen Final del Agente")
-                st.markdown(response.text)
+               st.markdown("---")
+               st.markdown("### 📋 Dictamen Final del Agente")
+               st.markdown(response.text)
                 
             except Exception as e:
                 st.error(f"❌ Error durante la ejecución del agente: {e}")
