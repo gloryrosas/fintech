@@ -113,9 +113,9 @@ if run_agent:
                 
                 # Iniciar la conversación con el objetivo del usuario
                chat = client.chats.create(model="gemini-2.5-flash", config=config)
-                response = chat.send_message(prompt_usuario)
+               response = chat.send_message(prompt_usuario)
                 
-                log_logs = []
+               log_logs = []
                 
                 # ==========================================
                 # 2. BUCLE AUTÓNOMO (AGENTIC LOOP)
