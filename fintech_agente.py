@@ -145,7 +145,7 @@ if run_agent:
                         )
                 
                 # Mostrar traza técnica del bucle
-                st.markdown("### 🔍 Traza del Bucle Autónomo (Agentic Loop)")
+               st.markdown("### 🔍 Traza del Bucle Autónomo (Agentic Loop)")
                 for log in log_logs:
                     st.markdown(f'<div class="agent-log">{log}</div>', unsafe_allow_html=True)
                     
