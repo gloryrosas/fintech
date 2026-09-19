@@ -121,7 +121,7 @@ if run_agent:
                 # 2. BUCLE AUTÓNOMO (AGENTIC LOOP)
                 # ==========================================
                 # El agente evalúa si necesita llamar a funciones de forma iterativa
-                while response.function_calls:
+               while response.function_calls:
                     for function_call in response.function_calls:
                         nombre_fn = function_call.name
                         args_fn = function_call.args
