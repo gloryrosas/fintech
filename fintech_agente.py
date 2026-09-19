@@ -102,7 +102,7 @@ if run_agent:
                 
                 # Configuración del motor con las funciones inyectadas como herramientas
                 config = types.GenerateContentConfig(
-                    tools=[auditar_transacciones_fintech, congelar_cuenta_riesgo],
+                   tools=[auditar_transacciones_fintech, congelar_cuenta_riesgo],
                     system_instruction=(
                         "Eres Pulso, un agente de IA experto en auditoría fintech y prevención de fraude. "
                         "Analiza los objetivos del usuario, decide qué herramientas invocar, procesa las observaciones "
