@@ -1,0 +1,8 @@
+streamlit
+pandas
+altair
+google-genai
+reportlab
+xlsxwriter
+matplotlib
+openpyxl
