@@ -112,7 +112,7 @@ if run_agent:
                 )
                 
                 # Iniciar la conversación con el objetivo del usuario
-               chat = client.chats.create(model="gemini-1.5-flash", config=config)
+               chat = client.chats.create(model="gemini-3.6-flash", config=config)
                response = chat.send_message(prompt_usuario)
                 
                log_logs = []
