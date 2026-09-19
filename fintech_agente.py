@@ -98,7 +98,7 @@ if run_agent:
         with st.spinner("🤖 El agente está procesando el bucle de razonamiento y llamadas a herramientas..."):
             try:
                 # Inicializar cliente de Google GenAI (requiere GEMINI_API_KEY en variables de entorno)
-                client = genai.Client(api_key="AQ.Ab8RN6JsAK9Sr2sqdsbF67Yn3wez6FlbAnMa_pWnrLsCn-qzoQL")
+               client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                 
                 # Configuración del motor con las funciones inyectadas como herramientas
                 config = types.GenerateContentConfig(
