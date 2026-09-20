@@ -4,6 +4,7 @@ from google.genai import types
 import pandas as pd
 import plotly.express as px
 import io
+from datetime import datetime
 
 # Configuración de la página de Streamlit
 st.set_page_config(
@@ -16,21 +17,14 @@ st.set_page_config(
 st.markdown("""
     <style>
     .titulo-principal {
-        font-size: 28px;
+        font-size: 26px;
         font-weight: bold;
         text-align: center;
         width: 100%;
-        margin-bottom: 5px;
-    }
-    .subtitulo-centrado {
-        font-size: 16px;
-        color: #555;
-        text-align: center;
         margin-bottom: 30px;
     }
     </style>
-    <div class="titulo-principal">Monitoreo automatizado, mitigación de riesgos y dictamen de transacciones en tiempo real</div>
-    <div class="subtitulo-centrado">Centro de Auditoría y Prevención de Fraude - Sabertec AI</div>
+    <div class="titulo-principal">DICTAMEN EJECUTIVO DE AUDITORÍA Y PREVENCIÓN DE FRAUDE</div>
 """, unsafe_allow_html=True)
 
 # Verificamos si la librería genai está disponible
@@ -69,6 +63,8 @@ if "df_500" not in st.session_state:
     st.session_state.df_500 = None
 if "response_text" not in st.session_state:
     st.session_state.response_text = None
+if "fecha_actual" not in st.session_state:
+    st.session_state.fecha_actual = None
 
 if run_agent:
     if not HAS_GENAI:
@@ -94,8 +90,15 @@ if run_agent:
                 chat = client.chats.create(model="gemini-3.6-flash", config=config)
                 response = chat.send_message(prompt_usuario)
 
-                # Guardamos los resultados en el session_state para evitar que se borren
                 st.session_state.response_text = response.text
+                
+                # Generar la fecha actual formateada en español
+                meses = {
+                    1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril", 5: "Mayo", 6: "Junio",
+                    7: "Julio", 8: "Agosto", 9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+                }
+                ahora = datetime.now()
+                st.session_state.fecha_actual = f"{ahora.day} de {meses[ahora.month]} de {ahora.year}"
 
                 import random
                 random.seed(42)
@@ -129,9 +132,11 @@ if st.session_state.df_500 is not None:
     # Subtítulo alineado a la izquierda según solicitud
     st.markdown("### Dictamen del Agente")
     
-    st.markdown("""
+    st.markdown(f"""
     - **Agente Auditor:** IA Experta en Auditoría Fintech y Riesgo Operativo
     - **Estado de Auditoría:** Completado con Éxito
+    - **Fecha de Emisión:** {st.session_state.fecha_actual}
+    - **Alcance:** Monitoreo y Análisis de Riesgo transaccional
     """)
 
     st.markdown(st.session_state.response_text)
