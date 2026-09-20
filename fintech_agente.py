@@ -147,7 +147,7 @@ if run_agent:
                         color='Estado de Diagnóstico',
                         color_discrete_map={
                             "APROBADO": "#27ae60", 
-                            "REVISION_KYC": "#2b5c8f", 
+                            "REVISION_KYC": "#f39c12", 
                             "CRITICO_FRAUDE": "#e74c3c"
                         }
                     )
