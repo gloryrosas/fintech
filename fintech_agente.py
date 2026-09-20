@@ -11,7 +11,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Título comercial y profesional (sin tecnicismos para el cliente)
+# Título comercial y profesional adaptado a Fintech
 st.title("🛡️ Sabertec AI | Centro de Auditoría y Prevención de Fraude")
 st.markdown("Monitoreo automatizado, mitigación de riesgos y dictamen de transacciones en tiempo real.")
 
@@ -40,7 +40,7 @@ def congelar_cuenta_riesgo(tx_id: str) -> dict:
 st.sidebar.header("⚙️ Configuración del Módulo")
 prompt_usuario = st.sidebar.text_area(
     "💬 Objetivo de Auditoría:",
-    value="Audita 500 transacciones con un umbral de alerta de 75. Si encuentras operaciones críticas, procede a congelar preventivamente la primera detectada y preséntame el dictamen ejecutivo completo.",
+    value="Audita 500 transacciones con un umbral de alerta de 75. Si encuentras operaciones críticas, procede a congelar preventivamente la primera detectada y preséntame el dictamen en una tabla detallada junto con un gráfico de distribución.",
     height=130
 )
 
@@ -70,11 +70,11 @@ if run_agent:
                 chat = client.chats.create(model="gemini-3.6-flash", config=config)
                 response = chat.send_message(prompt_usuario)
 
-                # Mostramos el dictamen generado por el agente
-                st.markdown("### 📋 Dictamen Ejecutivo")
+                # Mostramos la respuesta generada por el agente
+                st.markdown("### 📋 Dictamen del Agente")
                 st.markdown(response.text)
 
-                # Datos para la tabla y gráfico
+                # Simulación de un DataFrame representativo para la tabla y el gráfico de torta
                 data_ejemplo = {
                     "ID Transacción": ["TX-90000", "TX-90001", "TX-90002", "TX-90003", "TX-90004"],
                     "Canal": ["Checkout Web", "POS Físico", "Banca por Internet", "App Móvil", "Banca por Internet"],
@@ -87,7 +87,7 @@ if run_agent:
                 st.markdown("---")
                 st.markdown("### 2. Detalle de Muestra Representativa y Distribución")
                 
-                # Columnas para organizar tabla y gráfico de torta con colores claros
+                # Dividimos el espacio en 2 columnas: izquierda para la tabla, derecha para el gráfico de torta/dona claro
                 col_tabla, col_grafico = st.columns([1.2, 0.8])
 
                 with col_tabla:
@@ -97,7 +97,6 @@ if run_agent:
                 with col_grafico:
                     st.subheader("Distribución de Transacciones Auditadas (N=500)")
                     
-                    # DataFrame específico para el gráfico de torta con proporciones claras
                     df_pie = pd.DataFrame({
                         "Estado": ["Conformes (Bajo Riesgo)", "Alertas Críticas (≥ 75)"],
                         "Cantidad": [488, 12]
@@ -114,30 +113,8 @@ if run_agent:
                             "Alertas Críticas (≥ 75)": "#e74c3c"
                         }
                     )
-                    fig.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=320)
+                    fig.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=300)
                     st.plotly_chart(fig, use_container_width=True)
-
-                # Sección del Diagrama de Flujo con colores profesionales
-                st.markdown("---")
-                st.markdown("### 3. Diagrama de Flujo de Mitigación")
-                st.markdown("Flujo automatizado de detección, análisis y respuesta preventiva:")
-                st.markdown("""
-                ```mermaid
-                graph TD
-                    A[Inicio: Auditoría de 500 Transacciones] --> B{¿Score > 75?}
-                    B -- Sí --> C[Alerta Crítica Detectada]
-                    C --> D[Congelamiento Preventivo Automático]
-                    D --> E[Generación de Dictamen Ejecutivo]
-                    B -- No --> F[Transacción Aprobada / Conforme]
-                    
-                    style A fill:#f9f9f9,stroke:#333,stroke-width:2px
-                    style B fill:#f39c12,stroke:#d35400,stroke-width:2px,color:#fff
-                    style C fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:#fff
-                    style D fill:#8e44ad,stroke:#6c3483,stroke-width:2px,color:#fff
-                    style E fill:#27ae60,stroke:#1e8449,stroke-width:2px,color:#fff
-                    style F fill:#2980b9,stroke:#1f618d,stroke-width:2px,color:#fff
-                ```
-                """)
 
             except Exception as e:
                 st.error(f"Error durante la ejecución del agente: {e}")
