@@ -3,6 +3,7 @@ from google import genai
 from google.genai import types
 import pandas as pd
 import plotly.express as px
+import io
 
 # Configuración de la página de Streamlit
 st.set_page_config(
@@ -120,7 +121,6 @@ if run_agent:
                     })
 
                 df_500 = pd.DataFrame(lista_transacciones)
-                # Aseguramos que la primera crítica coincida con la acción de congelamiento preventivo
                 df_500.loc[df_500["Estado de Diagnóstico"] == "CRITICO_FRAUDE", "ID Transacción"].iloc[0] = "TX-CRIT-001"
 
                 st.markdown("---")
@@ -130,7 +130,7 @@ if run_agent:
                 conteo_estados = df_500["Estado de Diagnóstico"].value_counts().reset_index()
                 conteo_estados.columns = ["Estado de Diagnóstico", "Cantidad"]
 
-                # Dividimos en 2 columnas: Tabla resumida agrupada a la izquierda, Gráfico de Torta a la derecha
+                # Dividimos en 2 columnas: Tabla resumida agrupada a la izquierda, Gráfico de Torta a la derecha con amarillo KYC
                 col_tabla, col_grafico = st.columns([1.2, 0.8])
 
                 with col_tabla:
@@ -146,13 +146,50 @@ if run_agent:
                         hole=0.4, 
                         color='Estado de Diagnóstico',
                         color_discrete_map={
-                            "APROBADO": "#27ae60", 
-                            "REVISION_KYC": "#f39c12", 
-                            "CRITICO_FRAUDE": "#e74c3c"
+                            "APROBADO": "#27ae60",         # Verde
+                            "REVISION_KYC": "#f39c12",     # Amarillo corporativo (KYC)
+                            "CRITICO_FRAUDE": "#e74c3c"    # Rojo de alerta crítica
                         }
                     )
                     fig.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=300)
                     st.plotly_chart(fig, use_container_width=True)
+
+                # --- SECCIÓN DE DESCARGA DE EXCELS PARA REVISIÓN ---
+                st.markdown("---")
+                st.markdown("### 📥 Exportación de Reportes para el Equipo Operativo")
+                st.markdown("Descarga los registros detallados de los casos que requieren atención inmediata:")
+
+                # Filtramos los DataFrames para cada archivo
+                df_kyc = df_500[df_500["Estado de Diagnóstico"] == "REVISION_KYC"]
+                df_critico = df_500[df_500["Estado de Diagnóstico"] == "CRITICO_FRAUDE"]
+
+                # Función auxiliar para convertir DataFrame a Excel en memoria
+                def convertir_a_excel(df):
+                    output = io.BytesIO()
+                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                        df.to_excel(writer, index=False, sheet_name='Transacciones')
+                    processed_data = output.getvalue()
+                    return processed_data
+
+                col_excel1, col_excel2 = st.columns(2)
+
+                with col_excel1:
+                    excel_kyc_data = convertir_a_excel(df_kyc)
+                    st.download_button(
+                        label="📥 Descargar Excel: Revisiones KYC (Amarillo)",
+                        data=excel_kyc_data,
+                        file_name="transacciones_revision_kyc.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+
+                with col_excel2:
+                    excel_critico_data = convertir_a_excel(df_critico)
+                    st.download_button(
+                        label="📥 Descargar Excel: Críticos por Fraude (Rojo)",
+                        data=excel_critico_data,
+                        file_name="transacciones_criticas_fraude.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
 
             except Exception as e:
                 st.error(f"Error durante la ejecución del agente: {e}")
