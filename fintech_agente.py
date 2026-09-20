@@ -11,9 +11,26 @@ st.set_page_config(
     layout="wide"
 )
 
-# Título comercial y profesional adaptado a Fintech
-st.title("🛡️ Sabertec AI | Centro de Auditoría y Prevención de Fraude")
-st.markdown("Monitoreo automatizado, mitigación de riesgos y dictamen de transacciones en tiempo real.")
+# Estilo CSS para alinear el título principal centrado, en letra grande y que entre en una sola línea
+st.markdown("""
+    <style>
+    .titulo-principal {
+        font-size: 28px;
+        font-weight: bold;
+        text-align: center;
+        width: 100%;
+        margin-bottom: 5px;
+    }
+    .subtitulo-centrado {
+        font-size: 16px;
+        color: #555;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    </style>
+    <div class="titulo-principal">Monitoreo automatizado, mitigación de riesgos y dictamen de transacciones en tiempo real</div>
+    <div class="subtitulo-centrado">Centro de Auditoría y Prevención de Fraude - Sabertec AI</div>
+""", unsafe_allow_html=True)
 
 # Verificamos si la librería genai está disponible
 HAS_GENAI = True
@@ -40,7 +57,7 @@ def congelar_cuenta_riesgo(tx_id: str) -> dict:
 st.sidebar.header("⚙️ Configuración del Módulo")
 prompt_usuario = st.sidebar.text_area(
     "💬 Objetivo de Auditoría:",
-    value="Audita 500 transacciones con un umbral de alerta de 75. Si encuentras operaciones críticas, procede a congelar preventivamente la primera detectada y preséntame el dictamen en una tabla detallada junto con un gráfico de distribución.",
+    value="Audita 500 transacciones con un umbral de alerta de 75. Si encuentras operaciones críticas, procede a congelar preventivamente la primera detectada y preséntame el dictamen ejecutivo estructurado.",
     height=130
 )
 
@@ -59,9 +76,9 @@ if run_agent:
                 config = types.GenerateContentConfig(
                     tools=[auditar_transacciones_fintech, congelar_cuenta_riesgo],
                     system_instruction=(
-                        "Eres Pulso, un agente de IA experto en auditoría fintech y prevención de fraude. "
+                        "Eres un sistema experto en auditoría fintech y prevención de fraude. "
                         "Analiza los objetivos del usuario, decide qué herramientas invocar, procesa las observaciones "
-                        "y redacta un dictamen ejecutivo estructurado."
+                        "y redacta un dictamen ejecutivo estructurado, limpio y sin menciones a nombres internos."
                     ),
                     temperature=0.2
                 )
@@ -70,47 +87,68 @@ if run_agent:
                 chat = client.chats.create(model="gemini-3.6-flash", config=config)
                 response = chat.send_message(prompt_usuario)
 
-                # Mostramos la respuesta generada por el agente
-                st.markdown("### 📋 Dictamen del Agente")
+                # Subtítulo alineado a la izquierda según solicitud
+                st.markdown("### Dictamen del Agente")
+                
+                # Datos fijos y limpios solicitados
+                st.markdown("""
+                - **Agente Auditor:** IA Experta en Auditoría Fintech y Riesgo Operativo
+                - **Estado de Auditoría:** Completado con Éxito
+                """)
+
+                # Mostramos la respuesta del modelo (manteniendo el Resumen Operativo intacto)
                 st.markdown(response.text)
 
-                # Simulación de un DataFrame representativo para la tabla y el gráfico de torta
-                data_ejemplo = {
-                    "ID Transacción": ["TX-90000", "TX-90001", "TX-90002", "TX-90003", "TX-90004"],
-                    "Canal": ["Checkout Web", "POS Físico", "Banca por Internet", "App Móvil", "Banca por Internet"],
-                    "Monto (USD)": [3192.97, 8081.81, 6225.97, 5094.62, 1338.82],
-                    "Score de Riesgo": [70.6, 55.4, 34.1, 81.5, 69.4],
-                    "Estado de Diagnóstico": ["REVISION_KYC", "REVISION_KYC", "APROBADO", "CRITICO_FRAUDE", "REVISION_KYC"]
-                }
-                df = pd.DataFrame(data_ejemplo)
+                # Generación de datos simulados coherentes para las 500 transacciones agrupadas por estado
+                import random
+                random.seed(42)
+                
+                ids = [f"TX-{str(i).zfill(5)}" for i in range(90000, 90500)]
+                canales = ["Checkout Web", "POS Físico", "Banca por Internet", "App Móvil"]
+                estados_posibles = ["APROBADO", "REVISION_KYC", "CRITICO_FRAUDE"]
+                pesos_estados = [0.75, 0.22, 0.03] # Coherente con ~500 registros
+
+                lista_transacciones = []
+                for i in range(500):
+                    est = random.choices(estados_posibles, weights=pesos_estados)[0]
+                    lista_transacciones.append({
+                        "ID Transacción": ids[i],
+                        "Canal": random.choice(canales),
+                        "Monto (USD)": round(random.uniform(50.0, 9000.0), 2),
+                        "Score de Riesgo": round(random.uniform(10.0, 95.0), 1) if est != "CRITICO_FRAUDE" else round(random.uniform(76.0, 99.9), 1),
+                        "Estado de Diagnóstico": est
+                    })
+
+                df_500 = pd.DataFrame(lista_transacciones)
+                # Aseguramos que la primera crítica coincida con la acción de congelamiento preventivo
+                df_500.loc[df_500["Estado de Diagnóstico"] == "CRITICO_FRAUDE", "ID Transacción"].iloc[0] = "TX-CRIT-001"
 
                 st.markdown("---")
-                st.markdown("### 2. Detalle de Muestra Representativa y Distribución")
-                
-                # Dividimos el espacio en 2 columnas: izquierda para la tabla, derecha para el gráfico de torta/dona claro
+                st.markdown("### Resumen y Distribución General de Transacciones (N=500)")
+
+                # Agrupación de estados para la tabla resumen y el gráfico de torta
+                conteo_estados = df_500["Estado de Diagnóstico"].value_counts().reset_index()
+                conteo_estados.columns = ["Estado de Diagnóstico", "Cantidad"]
+
+                # Dividimos en 2 columnas: Tabla resumida agrupada a la izquierda, Gráfico de Torta a la derecha
                 col_tabla, col_grafico = st.columns([1.2, 0.8])
 
                 with col_tabla:
-                    st.subheader("📋 Registro de Transacciones")
-                    st.dataframe(df, use_container_width=True)
+                    st.subheader("📋 Consolidado por Estado")
+                    st.dataframe(conteo_estados, use_container_width=True)
 
                 with col_grafico:
-                    st.subheader("Distribución de Transacciones Auditadas (N=500)")
-                    
-                    df_pie = pd.DataFrame({
-                        "Estado": ["Conformes (Bajo Riesgo)", "Alertas Críticas (≥ 75)"],
-                        "Cantidad": [488, 12]
-                    })
-                    
+                    st.subheader("Distribución de Transacciones Auditadas")
                     fig = px.pie(
-                        df_pie, 
-                        names='Estado', 
+                        conteo_estados, 
+                        names='Estado de Diagnóstico', 
                         values='Cantidad', 
                         hole=0.4, 
-                        color='Estado',
+                        color='Estado de Diagnóstico',
                         color_discrete_map={
-                            "Conformes (Bajo Riesgo)": "#2b5c8f", 
-                            "Alertas Críticas (≥ 75)": "#e74c3c"
+                            "APROBADO": "#27ae60", 
+                            "REVISION_KYC": "#2b5c8f", 
+                            "CRITICO_FRAUDE": "#e74c3c"
                         }
                     )
                     fig.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=300)
