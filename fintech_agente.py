@@ -64,6 +64,12 @@ prompt_usuario = st.sidebar.text_area(
 
 run_agent = st.sidebar.button("🚀 Ejecutar Auditoría Inteligente")
 
+# Inicializamos el estado en la sesión si no existe
+if "df_500" not in st.session_state:
+    st.session_state.df_500 = None
+if "response_text" not in st.session_state:
+    st.session_state.response_text = None
+
 if run_agent:
     if not HAS_GENAI:
         st.error("⚠️ La librería `google-genai` no está instalada o configurada correctamente.")
@@ -88,26 +94,16 @@ if run_agent:
                 chat = client.chats.create(model="gemini-3.6-flash", config=config)
                 response = chat.send_message(prompt_usuario)
 
-                # Subtítulo alineado a la izquierda según solicitud
-                st.markdown("### Dictamen del Agente")
-                
-                # Datos fijos y limpios solicitados
-                st.markdown("""
-                - **Agente Auditor:** IA Experta en Auditoría Fintech y Riesgo Operativo
-                - **Estado de Auditoría:** Completado con Éxito
-                """)
+                # Guardamos los resultados en el session_state para evitar que se borren
+                st.session_state.response_text = response.text
 
-                # Mostramos la respuesta del modelo (manteniendo el Resumen Operativo intacto)
-                st.markdown(response.text)
-
-                # Generación de datos simulados coherentes para las 500 transacciones agrupadas por estado
                 import random
                 random.seed(42)
                 
                 ids = [f"TX-{str(i).zfill(5)}" for i in range(90000, 90500)]
                 canales = ["Checkout Web", "POS Físico", "Banca por Internet", "App Móvil"]
                 estados_posibles = ["APROBADO", "REVISION_KYC", "CRITICO_FRAUDE"]
-                pesos_estados = [0.75, 0.22, 0.03] # Coherente con ~500 registros
+                pesos_estados = [0.75, 0.22, 0.03]
 
                 lista_transacciones = []
                 for i in range(500):
@@ -122,74 +118,84 @@ if run_agent:
 
                 df_500 = pd.DataFrame(lista_transacciones)
                 df_500.loc[df_500["Estado de Diagnóstico"] == "CRITICO_FRAUDE", "ID Transacción"].iloc[0] = "TX-CRIT-001"
-
-                st.markdown("---")
-                st.markdown("### Resumen y Distribución General de Transacciones (N=500)")
-
-                # Agrupación de estados para la tabla resumen y el gráfico de torta
-                conteo_estados = df_500["Estado de Diagnóstico"].value_counts().reset_index()
-                conteo_estados.columns = ["Estado de Diagnóstico", "Cantidad"]
-
-                # Dividimos en 2 columnas: Tabla resumida agrupada a la izquierda, Gráfico de Torta a la derecha con amarillo KYC
-                col_tabla, col_grafico = st.columns([1.2, 0.8])
-
-                with col_tabla:
-                    st.subheader("📋 Consolidado por Estado")
-                    st.dataframe(conteo_estados, use_container_width=True)
-
-                with col_grafico:
-                    st.subheader("Distribución de Transacciones Auditadas")
-                    fig = px.pie(
-                        conteo_estados, 
-                        names='Estado de Diagnóstico', 
-                        values='Cantidad', 
-                        hole=0.4, 
-                        color='Estado de Diagnóstico',
-                        color_discrete_map={
-                            "APROBADO": "#27ae60",         # Verde
-                            "REVISION_KYC": "#f39c12",     # Amarillo corporativo (KYC)
-                            "CRITICO_FRAUDE": "#e74c3c"    # Rojo de alerta crítica
-                        }
-                    )
-                    fig.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=300)
-                    st.plotly_chart(fig, use_container_width=True)
-
-                # --- SECCIÓN DE DESCARGA DE EXCELS PARA REVISIÓN ---
-                st.markdown("---")
-                st.markdown("### 📥 Exportación de Reportes para el Equipo Operativo")
-                st.markdown("Descarga los registros detallados de los casos que requieren atención inmediata:")
-
-                # Filtramos los DataFrames para cada archivo
-                df_kyc = df_500[df_500["Estado de Diagnóstico"] == "REVISION_KYC"]
-                df_critico = df_500[df_500["Estado de Diagnóstico"] == "CRITICO_FRAUDE"]
-
-                # Función auxiliar para convertir DataFrame a Excel en memoria
-                def convertir_a_excel(df):
-                    output = io.BytesIO()
-                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                        df.to_excel(writer, index=False, sheet_name='Transacciones')
-                    processed_data = output.getvalue()
-                    return processed_data
-
-                col_excel1, col_excel2 = st.columns(2)
-
-                with col_excel1:
-                    excel_kyc_data = convertir_a_excel(df_kyc)
-                    st.download_button(
-                        label="📥 Descargar Excel: Revisiones KYC (Amarillo)",
-                        data=excel_kyc_data,
-                        file_name="transacciones_revision_kyc.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
-
-                with col_excel2:
-                    excel_critico_data = convertir_a_excel(df_critico)
-                    st.download_button(
-                        label="📥 Descargar Excel: Críticos por Fraude (Rojo)",
-                        data=excel_critico_data,
-                        file_name="transacciones_criticas_fraude.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
+                
+                st.session_state.df_500 = df_500
 
             except Exception as e:
                 st.error(f"Error durante la ejecución del agente: {e}")
+
+# Renderizado de la interfaz si ya existen datos en memoria (session_state)
+if st.session_state.df_500 is not None:
+    # Subtítulo alineado a la izquierda según solicitud
+    st.markdown("### Dictamen del Agente")
+    
+    st.markdown("""
+    - **Agente Auditor:** IA Experta en Auditoría Fintech y Riesgo Operativo
+    - **Estado de Auditoría:** Completado con Éxito
+    """)
+
+    st.markdown(st.session_state.response_text)
+
+    st.markdown("---")
+    st.markdown("### Resumen y Distribución General de Transacciones (N=500)")
+
+    conteo_estados = st.session_state.df_500["Estado de Diagnóstico"].value_counts().reset_index()
+    conteo_estados.columns = ["Estado de Diagnóstico", "Cantidad"]
+
+    col_tabla, col_grafico = st.columns([1.2, 0.8])
+
+    with col_tabla:
+        st.subheader("📋 Consolidado por Estado")
+        st.dataframe(conteo_estados, use_container_width=True)
+
+    with col_grafico:
+        st.subheader("Distribución de Transacciones Auditadas")
+        fig = px.pie(
+            conteo_estados, 
+            names='Estado de Diagnóstico', 
+            values='Cantidad', 
+            hole=0.4, 
+            color='Estado de Diagnóstico',
+            color_discrete_map={
+                "APROBADO": "#27ae60",         # Verde
+                "REVISION_KYC": "#f39c12",     # Amarillo corporativo (KYC)
+                "CRITICO_FRAUDE": "#e74c3c"    # Rojo de alerta crítica
+            }
+        )
+        fig.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=300)
+        st.plotly_chart(fig, use_container_width=True)
+
+    # --- SECCIÓN DE DESCARGA DE EXCELS SIN REINICIAR ---
+    st.markdown("---")
+    st.markdown("### 📥 Exportación de Reportes para el Equipo Operativo")
+    st.markdown("Descarga los registros detallados de los casos que requieren atención inmediata:")
+
+    df_kyc = st.session_state.df_500[st.session_state.df_500["Estado de Diagnóstico"] == "REVISION_KYC"]
+    df_critico = st.session_state.df_500[st.session_state.df_500["Estado de Diagnóstico"] == "CRITICO_FRAUDE"]
+
+    def convertir_a_excel(df):
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Transacciones')
+        processed_data = output.getvalue()
+        return processed_data
+
+    col_excel1, col_excel2 = st.columns(2)
+
+    with col_excel1:
+        excel_kyc_data = convertir_a_excel(df_kyc)
+        st.download_button(
+            label="📥 Descargar Excel: Revisiones KYC (Amarillo)",
+            data=excel_kyc_data,
+            file_name="transacciones_revision_kyc.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    with col_excel2:
+        excel_critico_data = convertir_a_excel(df_critico)
+        st.download_button(
+            label="📥 Descargar Excel: Críticos por Fraude (Rojo)",
+            data=excel_critico_data,
+            file_name="transacciones_criticas_fraude.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
