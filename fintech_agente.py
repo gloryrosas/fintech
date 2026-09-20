@@ -80,8 +80,9 @@ if run_agent:
                     tools=[auditar_transacciones_fintech, congelar_cuenta_riesgo],
                     system_instruction=(
                         "Eres un sistema experto en auditoría fintech y prevención de fraude. "
-                        "Analiza los objetivos del usuario, decide qué herramientas invocar, procesa las observaciones "
-                        "y redacta un dictamen ejecutivo estructurado, limpio y sin menciones a nombres internos."
+                        "Analiza los objetivos del usuario, decide qué herramientas invocar y procesa las observaciones. "
+                        "IMPORTANTE: Redacta únicamente el cuerpo del dictamen (comenzando directamente por '1. Resumen Ejecutivo'). "
+                        "NO incluyas títulos principales, subtítulos repetidos, ni fechas de emisión en tu texto, ya que la interfaz se encarga de mostrarlos de forma independiente."
                     ),
                     temperature=0.2
                 )
