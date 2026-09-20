@@ -125,7 +125,11 @@ if run_agent:
                 st.session_state.df_500 = df_500
 
             except Exception as e:
-                st.error(f"Error durante la ejecución del agente: {e}")
+                error_str = str(e)
+                if "503" in error_str or "UNAVAILABLE" in error_str:
+                    st.warning("⚠️ El servicio de IA está experimentando alta demanda en este momento (Error 503). Por favor, espera unos segundos y vuelve a hacer clic en 'Ejecutar Auditoría Inteligente'.")
+                else:
+                    st.error(f"Error durante la ejecución del agente: {e}")
 
 # Renderizado de la interfaz si ya existen datos en memoria (session_state)
 if st.session_state.df_500 is not None:
