@@ -129,6 +129,8 @@ if run_agent:
                 error_str = str(e)
                 if "503" in error_str or "UNAVAILABLE" in error_str:
                     st.warning("⚠️ El servicio de IA está experimentando alta demanda en este momento (Error 503). Por favor, espera unos segundos y vuelve a hacer clic en 'Ejecutar Auditoría Inteligente'.")
+                elif "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
+                    st.warning("⚠️ Se ha superado temporalmente el límite de solicitudes de la cuota actual (Error 429). Por favor, espera unos segundos o un minuto antes de reintentar la auditoría.")
                 else:
                     st.error(f"Error durante la ejecución del agente: {e}")
 
