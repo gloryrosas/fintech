@@ -58,11 +58,10 @@ if "df_gateway" not in st.session_state:
     ]
     st.session_state.df_gateway = pd.DataFrame(data_transacciones)
 
-# --- 2. PANEL DE FILTROS EN LA BARRA LATERAL (MEJORADO) ---
+# --- 2. PANEL DE FILTROS EN LA BARRA LATERAL ---
 st.sidebar.header("🔍 Filtros y Auditoría de Pasarela")
 busqueda_cliente = st.sidebar.text_input("Buscar por ID de Cliente o Transacción:", value="")
 
-# Usamos Radio Buttons para que sea súper fácil de interactuar con el mouse (aparece la manito de inmediato)
 pasarela_seleccionada = st.sidebar.selectbox(
     "Filtrar por Pasarela:",
     options=["Todas", "Zelle", "PayPal", "Stripe", "Pago Móvil"]
@@ -196,3 +195,22 @@ Se identificaron 15 usuarios asociados al segmento de alto riesgo (puntajes cred
 2. **Suspensión temporal de límites** para transacciones mayores a 2.000,00 USD en Zelle y PayPal sujetas a autenticación reforzada.
 3. **Ajuste contable correctivo** para depurar los 9.050,00 USD erróneos en la conciliación de Stripe.
 """)
+
+# --- 7. PLAN DE ACCIÓN / LLAMADA A LA ACCIÓN (CTA) ---
+st.markdown("---")
+st.markdown("""
+<div style="background-color: #111827; padding: 35px; border-radius: 10px; color: white; text-align: center;">
+    <h2 style="color: white; margin-bottom: 10px;">🚀 ¿Quieres implementar este Agente IA en los procesos de tu empresa?</h2>
+    <p style="color: #9CA3AF; font-size: 16px; margin-bottom: 25px;">Optimiza tu contabilidad, detecta riesgos a tiempo y automatiza tus reportes con la tecnología de Sabertec.</p>
+</div>
+""", unsafe_allow_html=True)
+
+st.write("")
+col_cta1, col_cta2, col_cta3 = st.columns([1, 2, 1])
+with col_cta2:
+    correo_usuario = st.text_input("Ingresa tu correo corporativo:", placeholder="tu-correo@empresa.com", label_visibility="collapsed")
+    if st.button("🚀 Solicitar Asesoría con Sabertec", use_container_width=True):
+        if correo_usuario:
+            st.success(f"¡Gracias! Hemos recibido tu solicitud para el correo **{correo_usuario}**. Un especialista se pondrá en contacto contigo pronto.")
+        else:
+            st.warning("Por favor ingresa un correo corporativo válido antes de solicitar la asesoría.")
