@@ -140,7 +140,7 @@ with col_graf2:
 
 st.markdown("---")
 
-# --- 5. TABLA EN TIEMPO REAL CON FILTROS ---
+# --- 5. TABLA EN TIEMPO REAL CON FILTROS (¡CORREGIDO AQUÍ!) ---
 st.markdown("### 📋 Registro de Transacciones en Tiempo Real")
 st.dataframe(df_filtrado, use_container_width=True)
 
