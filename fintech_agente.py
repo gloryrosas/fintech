@@ -91,13 +91,13 @@ st.markdown("### 📊 Métricas de Ingresos y Estado de Cobros")
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
 with kpi1:
-    st.metric(label="Volumen Total Procesado", value="$52,475.00", delta="100% General")[cite: 5]
+    st.metric(label="Volumen Total Procesado", value="$52,475.00", delta="100% General")
 with kpi2:
-    st.metric(label="Fondos Retenidos (Disputas)", value="$32,500.00", delta="Zelle & PayPal", delta_color="inverse")[cite: 5]
+    st.metric(label="Fondos Retenidos (Disputas)", value="$32,500.00", delta="Zelle & PayPal", delta_color="inverse")
 with kpi3:
-    st.metric(label="Desviación Contable (Stripe)", value="$9,050.00", delta="Conciliación errónea", delta_color="inverse")[cite: 5]
+    st.metric(label="Desviación Contable (Stripe)", value="$9,050.00", delta="Conciliación errónea", delta_color="inverse")
 with kpi4:
-    st.metric(label="Exposición Total al Riesgo", value="$41,550.00", delta="Alerta Crítica", delta_color="inverse")[cite: 5]
+    st.metric(label="Exposición Total al Riesgo", value="$41,550.00", delta="Alerta Crítica", delta_color="inverse")
 
 st.markdown("---")
 
@@ -161,30 +161,30 @@ st.download_button(
 st.markdown("---")
 st.markdown("### 📑 Dictamen Ejecutivo de Mitigación y Prevención de Fraude")
 st.markdown("""
-**A:** Dirección General y Comité de Riesgos de Sabertec[cite: 5]  
-**De:** Auditoría Senior Automática de Riesgo Crediticio y Pasarelas[cite: 5]  
-**Asunto:** Dictamen de Mitigación de Contracargos, Discrepancias de Conciliación y Aislamiento de Cuentas Fraudulentas[cite: 5]
+**A:** Dirección General y Comité de Riesgos de Sabertec  
+**De:** Auditoría Senior Automática de Riesgo Crediticio y Pasarelas  
+**Asunto:** Dictamen de Mitigación de Contracargos, Discrepancias de Conciliación y Aislamiento de Cuentas Fraudulentas
 
 #### 📊 Resumen Ejecutivo Financiero
-* **Volumen transaccional analizado:** 52.475,00 USD[cite: 5].
-* **Fondos retenidos en disputa (sin liquidación):** 32.500,00 USD (61.9% del volumen total en Zelle y PayPal)[cite: 5].
-* **Inconsistencia de control interno (Stripe):** 9.050,00 USD en transacciones rechazadas que figuran erróneamente como liquidadas[cite: 5].
-* **Exposición total al riesgo operativo y de crédito:** 41.550,00 USD[cite: 5].
+* **Volumen transaccional analizado:** 52.475,00 USD.
+* **Fondos retenidos en disputa (sin liquidación):** 32.500,00 USD (61.9% del volumen total en Zelle y PayPal).
+* **Inconsistencia de control interno (Stripe):** 9.050,00 USD en transacciones rechazadas que figuran erróneamente como liquidadas.
+* **Exposición total al riesgo operativo y de crédito:** 41.550,00 USD.
 
 #### 🔍 Análisis de Vulnerabilidades por Canal
-* **Zelle ($21.000,00):** Mayor severidad financiera con disputas abiertas por sospecha de fraude y saldo liquidado en cero[cite: 5].
-* **PayPal ($11.500,00):** Disputas activas por patrones de reincidencia en montos altos sin recuperación de fondos[cite: 5].
-* **Stripe ($9.050,00):** Brecha de conciliación con abonos y comisiones fantasmas sobre transacciones declinadas[cite: 5].
-* **Pago Móvil:** Operatividad regular y conforme a los parámetros de tolerancia al riesgo[cite: 5].
+* **Zelle ($21.000,00):** Mayor severidad financiera con disputas abiertas por sospecha de fraude y saldo liquidado en cero.
+* **PayPal ($11.500,00):** Disputas activas por patrones de reincidencia en montos altos sin recuperación de fondos.
+* **Stripe ($9.050,00):** Brecha de conciliación con abonos y comisiones fantasmas sobre transacciones declinadas.
+* **Pago Móvil:** Operatividad regular y conforme a los parámetros de tolerancia al riesgo.
 
 #### 🚨 Matriz de Riesgo y Bloqueo Obligatorio (15 Usuarios Identificados)
-Se identificaron 15 usuarios asociados al segmento de alto riesgo (puntajes crediticios entre 350 y 410, ingresos menores a 1.200,00 USD y banderas rojas de fraude activo)[cite: 5]:
-* **Bloque Zelle:** USR-207, USR-217, USR-227, USR-237, USR-247[cite: 5].
-* **Bloque PayPal:** USR-202, USR-212, USR-222, USR-232, USR-242[cite: 5].
-* **Bloque Stripe:** USR-204, USR-214, USR-224, USR-234, USR-244[cite: 5].
+Se identificaron 15 usuarios asociados al segmento de alto riesgo (puntajes crediticios entre 350 y 410, ingresos menores a 1.200,00 USD y banderas rojas de fraude activo):
+* **Bloque Zelle:** USR-207, USR-217, USR-227, USR-237, USR-247.
+* **Bloque PayPal:** USR-202, USR-212, USR-222, USR-232, USR-242.
+* **Bloque Stripe:** USR-204, USR-214, USR-224, USR-234, USR-244.
 
 #### ✅ Recomendaciones Obligatorias de Mitigación
-1. **Bloqueo preventivo inmediato** e inmovilización de fondos para las 15 cuentas listadas para detener nuevos contracargos[cite: 5].
-2. **Suspensión temporal de límites** para transacciones mayores a 2.000,00 USD en Zelle y PayPal sujetas a autenticación reforzada[cite: 5].
-3. **Ajuste contable correctivo** para depurar los 9.050,00 USD erróneos en la conciliación de Stripe[cite: 5].
+1. **Bloqueo preventivo inmediato** e inmovilización de fondos para las 15 cuentas listadas para detener nuevos contracargos.
+2. **Suspensión temporal de límites** para transacciones mayores a 2.000,00 USD en Zelle y PayPal sujetas a autenticación reforzada.
+3. **Ajuste contable correctivo** para depurar los 9.050,00 USD erróneos en la conciliación de Stripe.
 """)
