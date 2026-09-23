@@ -1,213 +1,190 @@
 import streamlit as st
-from google import genai
-from google.genai import types
 import pandas as pd
 import plotly.express as px
 import io
-from datetime import datetime
 
-# Configuración de la página de Streamlit
+# Configuración de la página
 st.set_page_config(
-    page_title="Sabertec AI: Auditoría Fintech",
-    page_icon="🛡️",
+    page_title="Sabertec | Gateway Dashboard & Risk Control",
+    page_icon="💳",
     layout="wide"
 )
 
-# Estilo CSS para alinear el título principal centrado, en letra grande y que entre en una sola línea
+# Estilo visual moderno para el Dashboard
 st.markdown("""
     <style>
-    .titulo-principal {
-        font-size: 26px;
-        font-weight: bold;
-        text-align: center;
-        width: 100%;
-        margin-bottom: 30px;
+    .main-header {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1E3A8A;
+        margin-bottom: 5px;
+    }
+    .sub-header {
+        font-size: 14px;
+        color: #6B7280;
+        margin-bottom: 25px;
     }
     </style>
-    <div class="titulo-principal">DICTAMEN EJECUTIVO DE AUDITORÍA Y PREVENCIÓN DE FRAUDE</div>
+    <div class="main-header">💳 SABERTEC PAYMENTS — DASHBOARD EN TIEMPO REAL</div>
+    <div class="sub-header">Monitoreo de transacciones, flujo de caja, pasarelas y auditoría de contracargos.</div>
 """, unsafe_allow_html=True)
 
-# Verificamos si la librería genai está disponible
-HAS_GENAI = True
+# --- 1. BASE DE DATOS DE LA PASARELA (TRANSACCIONAL) ---
+if "df_gateway" not in st.session_state:
+    data_transacciones = [
+        # Zelle (Disputas / Fraude)
+        {"ID_Tx": "TX-9001", "Fecha": "2026-06-10", "Pasarela": "Zelle", "Cliente": "USR-207", "Monto ($)": 4200.00, "Estado": "Disputa / Fraude", "Flujo": "Retenido"},
+        {"ID_Tx": "TX-9002", "Fecha": "2026-06-11", "Pasarela": "Zelle", "Cliente": "USR-217", "Monto ($)": 4500.00, "Estado": "Disputa / Fraude", "Flujo": "Retenido"},
+        {"ID_Tx": "TX-9003", "Fecha": "2026-06-12", "Pasarela": "Zelle", "Cliente": "USR-227", "Monto ($)": 4100.00, "Estado": "Disputa / Fraude", "Flujo": "Retenido"},
+        {"ID_Tx": "TX-9004", "Fecha": "2026-06-13", "Pasarela": "Zelle", "Cliente": "USR-237", "Monto ($)": 4000.00, "Estado": "Disputa / Fraude", "Flujo": "Retenido"},
+        {"ID_Tx": "TX-9005", "Fecha": "2026-06-14", "Pasarela": "Zelle", "Cliente": "USR-247", "Monto ($)": 4200.00, "Estado": "Disputa / Fraude", "Flujo": "Retenido"},
 
-# Definición de Herramientas (Tools / Functions)
-def auditar_transacciones_fintech(limite: int = 500, umbral_alerta: int = 75) -> dict:
-    """Simula la auditoría de un lote de transacciones financieras y retorna métricas clave."""
-    return {
-        "total_auditadas": limite,
-        "umbral_aplicado": umbral_alerta,
-        "alertas_detectadas": 12,
-        "estado": "Completado con éxito"
-    }
+        # PayPal (Disputas activas)
+        {"ID_Tx": "TX-8001", "Fecha": "2026-06-10", "Pasarela": "PayPal", "Cliente": "USR-202", "Monto ($)": 2300.00, "Estado": "Disputa / Fraude", "Flujo": "Retenido"},
+        {"ID_Tx": "TX-8002", "Fecha": "2026-06-11", "Pasarela": "PayPal", "Cliente": "USR-212", "Monto ($)": 2400.00, "Estado": "Disputa / Fraude", "Flujo": "Retenido"},
+        {"ID_Tx": "TX-8003", "Fecha": "2026-06-12", "Pasarela": "PayPal", "Cliente": "USR-222", "Monto ($)": 2200.00, "Estado": "Disputa / Fraude", "Flujo": "Retenido"},
+        {"ID_Tx": "TX-8004", "Fecha": "2026-06-13", "Pasarela": "PayPal", "Cliente": "USR-232", "Monto ($)": 2300.00, "Estado": "Disputa / Fraude", "Flujo": "Retenido"},
+        {"ID_Tx": "TX-8005", "Fecha": "2026-06-14", "Pasarela": "PayPal", "Cliente": "USR-242", "Monto ($)": 2300.00, "Estado": "Disputa / Fraude", "Flujo": "Retenido"},
 
-def congelar_cuenta_riesgo(tx_id: str) -> dict:
-    """Congela preventivamente una cuenta asociada a una transacción de alto riesgo."""
-    return {
-        "transaccion_afectada": tx_id,
-        "estado": "CONGELADA_PREVENTIVAMENTE",
-        "mensaje": "Se ha bloqueado la operación de forma exitosa."
-    }
+        # Stripe (Inconsistencia de Conciliación)
+        {"ID_Tx": "TX-7001", "Fecha": "2026-06-10", "Pasarela": "Stripe", "Cliente": "USR-204", "Monto ($)": 1810.00, "Estado": "Inconsistencia Conciliación", "Flujo": "Rechazada / Abonada Errónea"},
+        {"ID_Tx": "TX-7002", "Fecha": "2026-06-11", "Pasarela": "Stripe", "Cliente": "USR-214", "Monto ($)": 1810.00, "Estado": "Inconsistencia Conciliación", "Flujo": "Rechazada / Abonada Errónea"},
+        {"ID_Tx": "TX-7003", "Fecha": "2026-06-12", "Pasarela": "Stripe", "Cliente": "USR-224", "Monto ($)": 1810.00, "Estado": "Inconsistencia Conciliación", "Flujo": "Rechazada / Abonada Errónea"},
+        {"ID_Tx": "TX-7004", "Fecha": "2026-06-13", "Pasarela": "Stripe", "Cliente": "USR-234", "Monto ($)": 1810.00, "Estado": "Inconsistencia Conciliación", "Flujo": "Rechazada / Abonada Errónea"},
+        {"ID_Tx": "TX-7005", "Fecha": "2026-06-14", "Pasarela": "Stripe", "Cliente": "USR-244", "Monto ($)": 1810.00, "Estado": "Inconsistencia Conciliación", "Flujo": "Rechazada / Abonada Errónea"},
 
-# Configuración en Sidebar
-st.sidebar.header("⚙️ Configuración del Módulo")
-prompt_usuario = st.sidebar.text_area(
-    "💬 Objetivo de Auditoría:",
-    value="Audita 500 transacciones con un umbral de alerta de 75. Si encuentras operaciones críticas, procede a congelar preventivamente la primera detectada y preséntame el dictamen ejecutivo estructurado.",
-    height=130
+        # Pago Móvil (Operatividad limpia)
+        {"ID_Tx": "TX-6001", "Fecha": "2026-06-14", "Pasarela": "Pago Móvil", "Cliente": "CLIENTE-GENERAL", "Monto ($)": 10925.00, "Estado": "Aprobado / Regular", "Flujo": "Liquidado a Banco"}
+    ]
+    st.session_state.df_gateway = pd.DataFrame(data_transacciones)
+
+# --- 2. PANEL DE FILTROS EN LA BARRA LATERAL ---
+st.sidebar.header("🔍 Filtros y Auditoría de Pasarela")
+busqueda_cliente = st.sidebar.text_input("Buscar por ID de Cliente o Transacción:", value="")
+
+pasarela_seleccionada = st.sidebar.multiselect(
+    "Filtrar Pasarelas:",
+    options=["Zelle", "PayPal", "Stripe", "Pago Móvil"],
+    default=["Zelle", "PayPal", "Stripe", "Pago Móvil"]
 )
 
-run_agent = st.sidebar.button("🚀 Ejecutar Auditoría Inteligente")
+estado_seleccionado = st.sidebar.multiselect(
+    "Filtrar Estados de Pago:",
+    options=["Disputa / Fraude", "Inconsistencia Conciliación", "Aprobado / Regular"],
+    default=["Disputa / Fraude", "Inconsistencia Conciliación", "Aprobado / Regular"]
+)
 
-# Inicializamos el estado en la sesión si no existe
-if "df_500" not in st.session_state:
-    st.session_state.df_500 = None
-if "response_text" not in st.session_state:
-    st.session_state.response_text = None
-if "fecha_actual" not in st.session_state:
-    st.session_state.fecha_actual = None
+# --- APLICAR FILTROS A LOS DATOS ---
+df_filtrado = st.session_state.df_gateway.copy()
+if pasarela_seleccionada:
+    df_filtrado = df_filtrado[df_filtrado["Pasarela"].isin(pasarela_seleccionada)]
+if estado_seleccionado:
+    df_filtrado = df_filtrado[df_filtrado["Estado"].isin(estado_seleccionado)]
+if busqueda_cliente:
+    df_filtrado = df_filtrado[
+        df_filtrado["Cliente"].str.contains(busqueda_cliente, case=False, na=False) |
+        df_filtrado["ID_Tx"].str.contains(busqueda_cliente, case=False, na=False)
+    ]
 
-if run_agent:
-    if not HAS_GENAI:
-        st.error("⚠️ La librería `google-genai` no está instalada o configurada correctamente.")
-    else:
-        with st.spinner("🛡️ Analizando transacciones y aplicando protocolos de seguridad..."):
-            try:
-                # Inicializar cliente de Google GenAI usando el secreto de Streamlit
-                client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+# --- 3. MÉTRICAS EN TIEMPO REAL (KPI CARDS DE PASARELA) ---
+st.markdown("### 📊 Métricas de Ingresos y Estado de Cobros")
+kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
-                # Configuración del motor con las funciones inyectadas como herramientas
-                config = types.GenerateContentConfig(
-                    tools=[auditar_transacciones_fintech, congelar_cuenta_riesgo],
-                    system_instruction=(
-                        "Eres un sistema experto en auditoría fintech y prevención de fraude. "
-                        "Analiza los objetivos del usuario, decide qué herramientas invocar y procesa las observaciones. "
-                        "IMPORTANTE: Redacta únicamente el cuerpo del dictamen (comenzando directamente por '1. Resumen Ejecutivo'). "
-                        "NO incluyas títulos principales, subtítulos repetidos, ni fechas de emisión en tu texto, ya que la interfaz se encarga de mostrarlos de forma independiente."
-                    ),
-                    temperature=0.2
-                )
+with kpi1:
+    st.metric(label="Volumen Total Procesado", value="$52,475.00", delta="100% General")[cite: 5]
+with kpi2:
+    st.metric(label="Fondos Retenidos (Disputas)", value="$32,500.00", delta="Zelle & PayPal", delta_color="inverse")[cite: 5]
+with kpi3:
+    st.metric(label="Desviación Contable (Stripe)", value="$9,050.00", delta="Conciliación errónea", delta_color="inverse")[cite: 5]
+with kpi4:
+    st.metric(label="Exposición Total al Riesgo", value="$41,550.00", delta="Alerta Crítica", delta_color="inverse")[cite: 5]
 
-                # Iniciar la conversación con el modelo actualizado y compatible
-                chat = client.chats.create(model="gemini-3.6-flash", config=config)
-                response = chat.send_message(prompt_usuario)
+st.markdown("---")
 
-                st.session_state.response_text = response.text
-                
-                # Generar la fecha actual formateada en español
-                meses = {
-                    1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril", 5: "Mayo", 6: "Junio",
-                    7: "Julio", 8: "Agosto", 9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
-                }
-                ahora = datetime.now()
-                st.session_state.fecha_actual = f"{ahora.day} de {meses[ahora.month]} de {ahora.year}"
+# --- 4. GRÁFICOS INTERACTIVOS ---
+col_graf1, col_graf2 = st.columns(2)
 
-                import random
-                random.seed(42)
-                
-                ids = [f"TX-{str(i).zfill(5)}" for i in range(90000, 90500)]
-                canales = ["Checkout Web", "POS Físico", "Banca por Internet", "App Móvil"]
-                estados_posibles = ["APROBADO", "REVISION_KYC", "CRITICO_FRAUDE"]
-                pesos_estados = [0.75, 0.22, 0.03]
+with col_graf1:
+    st.subheader("💵 Volumen de Dinero por Pasarela y Estado")
+    fig_bar = px.bar(
+        df_filtrado,
+        x="Pasarela",
+        y="Monto ($)",
+        color="Estado",
+        barmode="group",
+        color_discrete_map={
+            "Disputa / Fraude": "#EF4444",
+            "Inconsistencia Conciliación": "#F59E0B",
+            "Aprobado / Regular": "#10B981"
+        }
+    )
+    fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=300)
+    st.plotly_chart(fig_bar, use_container_width=True)
 
-                lista_transacciones = []
-                for i in range(500):
-                    est = random.choices(estados_posibles, weights=pesos_estados)[0]
-                    lista_transacciones.append({
-                        "ID Transacción": ids[i],
-                        "Canal": random.choice(canales),
-                        "Monto (USD)": round(random.uniform(50.0, 9000.0), 2),
-                        "Score de Riesgo": round(random.uniform(10.0, 95.0), 1) if est != "CRITICO_FRAUDE" else round(random.uniform(76.0, 99.9), 1),
-                        "Estado de Diagnóstico": est
-                    })
+with col_graf2:
+    st.subheader("🥧 Distribución del Flujo de Caja")
+    fig_pie = px.pie(
+        df_filtrado,
+        names="Estado",
+        values="Monto ($)",
+        hole=0.4,
+        color="Estado",
+        color_discrete_map={
+            "Disputa / Fraude": "#EF4444",
+            "Inconsistencia Conciliación": "#F59E0B",
+            "Aprobado / Regular": "#10B981"
+        }
+    )
+    fig_pie.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=300)
+    st.plotly_chart(fig_pie, use_container_width=True)
 
-                df_500 = pd.DataFrame(lista_transacciones)
-                df_500.loc[df_500["Estado de Diagnóstico"] == "CRITICO_FRAUDE", "ID Transacción"].iloc[0] = "TX-CRIT-001"
-                
-                st.session_state.df_500 = df_500
+st.markdown("---")
 
-            except Exception as e:
-                error_str = str(e)
-                if "503" in error_str or "UNAVAILABLE" in error_str:
-                    st.warning("⚠️ El servicio de IA está experimentando alta demanda en este momento (Error 503). Por favor, espera unos segundos y vuelve a hacer clic en 'Ejecutar Auditoría Inteligente'.")
-                elif "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
-                    st.warning("⚠️ Se ha superado temporalmente el límite de solicitudes de la cuota actual (Error 429). Por favor, espera unos segundos o un minuto antes de reintentar la auditoría.")
-                else:
-                    st.error(f"Error durante la ejecución del agente: {e}")
+# --- 5. TABLA EN TIEMPO REAL CON FILTROS ---
+st.markdown("### 📋 Registro de Transacciones en Tiempo Real")
+st.dataframe(df_filtrado, use_container_width=True)
 
-# Renderizado de la interfaz si ya existen datos en memoria (session_state)
-if st.session_state.df_500 is not None:
-    # Subtítulo alineado a la izquierda según solicitud
-    st.markdown("### Dictamen del Agente")
-    
-    st.markdown(f"""
-    - **Agente Auditor:** IA Experta en Auditoría Fintech y Riesgo Operativo
-    - **Estado de Auditoría:** Completado con Éxito
-    - **Fecha de Emisión:** {st.session_state.fecha_actual}
-    - **Alcance:** Monitoreo y Análisis de Riesgo transaccional
-    """)
+# Exportar a Excel
+output = io.BytesIO()
+with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+    df_filtrado.to_excel(writer, index=False, sheet_name='Transacciones_Filtradas')
+excel_data = output.getvalue()
 
-    st.markdown(st.session_state.response_text)
+st.download_button(
+    label="📥 Descargar Reporte Filtrado en Excel",
+    data=excel_data,
+    file_name="reporte_transacciones_filtradas.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
 
-    st.markdown("---")
-    st.markdown("### Resumen y Distribución General de Transacciones (N=500)")
+# --- 6. DICTAMEN EJECUTIVO FINANCIERO ---
+st.markdown("---")
+st.markdown("### 📑 Dictamen Ejecutivo de Mitigación y Prevención de Fraude")
+st.markdown("""
+**A:** Dirección General y Comité de Riesgos de Sabertec[cite: 5]  
+**De:** Auditoría Senior Automática de Riesgo Crediticio y Pasarelas[cite: 5]  
+**Asunto:** Dictamen de Mitigación de Contracargos, Discrepancias de Conciliación y Aislamiento de Cuentas Fraudulentas[cite: 5]
 
-    conteo_estados = st.session_state.df_500["Estado de Diagnóstico"].value_counts().reset_index()
-    conteo_estados.columns = ["Estado de Diagnóstico", "Cantidad"]
+#### 📊 Resumen Ejecutivo Financiero
+* **Volumen transaccional analizado:** 52.475,00 USD[cite: 5].
+* **Fondos retenidos en disputa (sin liquidación):** 32.500,00 USD (61.9% del volumen total en Zelle y PayPal)[cite: 5].
+* **Inconsistencia de control interno (Stripe):** 9.050,00 USD en transacciones rechazadas que figuran erróneamente como liquidadas[cite: 5].
+* **Exposición total al riesgo operativo y de crédito:** 41.550,00 USD[cite: 5].
 
-    col_tabla, col_grafico = st.columns([1.2, 0.8])
+#### 🔍 Análisis de Vulnerabilidades por Canal
+* **Zelle ($21.000,00):** Mayor severidad financiera con disputas abiertas por sospecha de fraude y saldo liquidado en cero[cite: 5].
+* **PayPal ($11.500,00):** Disputas activas por patrones de reincidencia en montos altos sin recuperación de fondos[cite: 5].
+* **Stripe ($9.050,00):** Brecha de conciliación con abonos y comisiones fantasmas sobre transacciones declinadas[cite: 5].
+* **Pago Móvil:** Operatividad regular y conforme a los parámetros de tolerancia al riesgo[cite: 5].
 
-    with col_tabla:
-        st.subheader("📋 Consolidado por Estado")
-        st.dataframe(conteo_estados, use_container_width=True)
+#### 🚨 Matriz de Riesgo y Bloqueo Obligatorio (15 Usuarios Identificados)
+Se identificaron 15 usuarios asociados al segmento de alto riesgo (puntajes crediticios entre 350 y 410, ingresos menores a 1.200,00 USD y banderas rojas de fraude activo)[cite: 5]:
+* **Bloque Zelle:** USR-207, USR-217, USR-227, USR-237, USR-247[cite: 5].
+* **Bloque PayPal:** USR-202, USR-212, USR-222, USR-232, USR-242[cite: 5].
+* **Bloque Stripe:** USR-204, USR-214, USR-224, USR-234, USR-244[cite: 5].
 
-    with col_grafico:
-        st.subheader("Distribución de Transacciones Auditadas")
-        fig = px.pie(
-            conteo_estados, 
-            names='Estado de Diagnóstico', 
-            values='Cantidad', 
-            hole=0.4, 
-            color='Estado de Diagnóstico',
-            color_discrete_map={
-                "APROBADO": "#27ae60",         # Verde
-                "REVISION_KYC": "#f39c12",     # Amarillo corporativo (KYC)
-                "CRITICO_FRAUDE": "#e74c3c"    # Rojo de alerta crítica
-            }
-        )
-        fig.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=300)
-        st.plotly_chart(fig, use_container_width=True)
-
-    # --- SECCIÓN DE DESCARGA DE EXCELS SIN REINICIAR ---
-    st.markdown("---")
-    st.markdown("### 📥 Exportación de Reportes para el Equipo Operativo")
-    st.markdown("Descarga los registros detallados de los casos que requieren atención inmediata:")
-
-    df_kyc = st.session_state.df_500[st.session_state.df_500["Estado de Diagnóstico"] == "REVISION_KYC"]
-    df_critico = st.session_state.df_500[st.session_state.df_500["Estado de Diagnóstico"] == "CRITICO_FRAUDE"]
-
-    def convertir_a_excel(df):
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df.to_excel(writer, index=False, sheet_name='Transacciones')
-        processed_data = output.getvalue()
-        return processed_data
-
-    col_excel1, col_excel2 = st.columns(2)
-
-    with col_excel1:
-        excel_kyc_data = convertir_a_excel(df_kyc)
-        st.download_button(
-            label="📥 Descargar Excel: Revisiones KYC (Amarillo)",
-            data=excel_kyc_data,
-            file_name="transacciones_revision_kyc.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-
-    with col_excel2:
-        excel_critico_data = convertir_a_excel(df_critico)
-        st.download_button(
-            label="📥 Descargar Excel: Críticos por Fraude (Rojo)",
-            data=excel_critico_data,
-            file_name="transacciones_criticas_fraude.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+#### ✅ Recomendaciones Obligatorias de Mitigación
+1. **Bloqueo preventivo inmediato** e inmovilización de fondos para las 15 cuentas listadas para detener nuevos contracargos[cite: 5].
+2. **Suspensión temporal de límites** para transacciones mayores a 2.000,00 USD en Zelle y PayPal sujetas a autenticación reforzada[cite: 5].
+3. **Ajuste contable correctivo** para depurar los 9.050,00 USD erróneos en la conciliación de Stripe[cite: 5].
+""")
