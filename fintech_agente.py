@@ -58,28 +58,30 @@ if "df_gateway" not in st.session_state:
     ]
     st.session_state.df_gateway = pd.DataFrame(data_transacciones)
 
-# --- 2. PANEL DE FILTROS EN LA BARRA LATERAL ---
+# --- 2. PANEL DE FILTROS EN LA BARRA LATERAL (MEJORADO) ---
 st.sidebar.header("🔍 Filtros y Auditoría de Pasarela")
 busqueda_cliente = st.sidebar.text_input("Buscar por ID de Cliente o Transacción:", value="")
 
-pasarela_seleccionada = st.sidebar.multiselect(
-    "Filtrar Pasarelas:",
-    options=["Zelle", "PayPal", "Stripe", "Pago Móvil"],
-    default=["Zelle", "PayPal", "Stripe", "Pago Móvil"]
+# Usamos Radio Buttons para que sea súper fácil de interactuar con el mouse (aparece la manito de inmediato)
+pasarela_seleccionada = st.sidebar.selectbox(
+    "Filtrar por Pasarela:",
+    options=["Todas", "Zelle", "PayPal", "Stripe", "Pago Móvil"]
 )
 
-estado_seleccionado = st.sidebar.multiselect(
-    "Filtrar Estados de Pago:",
-    options=["Disputa / Fraude", "Inconsistencia Conciliación", "Aprobado / Regular"],
-    default=["Disputa / Fraude", "Inconsistencia Conciliación", "Aprobado / Regular"]
+estado_seleccionado = st.sidebar.selectbox(
+    "Filtrar por Estado de Pago:",
+    options=["Todos", "Disputa / Fraude", "Inconsistencia Conciliación", "Aprobado / Regular"]
 )
 
 # --- APLICAR FILTROS A LOS DATOS ---
 df_filtrado = st.session_state.df_gateway.copy()
-if pasarela_seleccionada:
-    df_filtrado = df_filtrado[df_filtrado["Pasarela"].isin(pasarela_seleccionada)]
-if estado_seleccionado:
-    df_filtrado = df_filtrado[df_filtrado["Estado"].isin(estado_seleccionado)]
+
+if pasarela_seleccionada != "Todas":
+    df_filtrado = df_filtrado[df_filtrado["Pasarela"] == pasarela_seleccionada]
+
+if estado_seleccionado != "Todos":
+    df_filtrado = df_filtrado[df_filtrado["Estado"] == estado_seleccionado]
+
 if busqueda_cliente:
     df_filtrado = df_filtrado[
         df_filtrado["Cliente"].str.contains(busqueda_cliente, case=False, na=False) |
@@ -106,41 +108,47 @@ col_graf1, col_graf2 = st.columns(2)
 
 with col_graf1:
     st.subheader("💵 Volumen de Dinero por Pasarela y Estado")
-    fig_bar = px.bar(
-        df_filtrado,
-        x="Pasarela",
-        y="Monto ($)",
-        color="Estado",
-        barmode="group",
-        color_discrete_map={
-            "Disputa / Fraude": "#EF4444",
-            "Inconsistencia Conciliación": "#F59E0B",
-            "Aprobado / Regular": "#10B981"
-        }
-    )
-    fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=300)
-    st.plotly_chart(fig_bar, use_container_width=True)
+    if not df_filtrado.empty:
+        fig_bar = px.bar(
+            df_filtrado,
+            x="Pasarela",
+            y="Monto ($)",
+            color="Estado",
+            barmode="group",
+            color_discrete_map={
+                "Disputa / Fraude": "#EF4444",
+                "Inconsistencia Conciliación": "#F59E0B",
+                "Aprobado / Regular": "#10B981"
+            }
+        )
+        fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=300)
+        st.plotly_chart(fig_bar, use_container_width=True)
+    else:
+        st.warning("No hay datos para mostrar con los filtros seleccionados.")
 
 with col_graf2:
     st.subheader("🥧 Distribución del Flujo de Caja")
-    fig_pie = px.pie(
-        df_filtrado,
-        names="Estado",
-        values="Monto ($)",
-        hole=0.4,
-        color="Estado",
-        color_discrete_map={
-            "Disputa / Fraude": "#EF4444",
-            "Inconsistencia Conciliación": "#F59E0B",
-            "Aprobado / Regular": "#10B981"
-        }
-    )
-    fig_pie.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=300)
-    st.plotly_chart(fig_pie, use_container_width=True)
+    if not df_filtrado.empty:
+        fig_pie = px.pie(
+            df_filtrado,
+            names="Estado",
+            values="Monto ($)",
+            hole=0.4,
+            color="Estado",
+            color_discrete_map={
+                "Disputa / Fraude": "#EF4444",
+                "Inconsistencia Conciliación": "#F59E0B",
+                "Aprobado / Regular": "#10B981"
+            }
+        )
+        fig_pie.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=300)
+        st.plotly_chart(fig_pie, use_container_width=True)
+    else:
+        st.warning("No hay datos para mostrar.")
 
 st.markdown("---")
 
-# --- 5. TABLA EN TIEMPO REAL CON FILTROS (¡CORREGIDO AQUÍ!) ---
+# --- 5. TABLA EN TIEMPO REAL CON FILTROS ---
 st.markdown("### 📋 Registro de Transacciones en Tiempo Real")
 st.dataframe(df_filtrado, use_container_width=True)
 
